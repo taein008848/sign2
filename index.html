@@ -14,20 +14,27 @@
             height: 100vh;
             margin: 0;
         }
+        #container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            max-width: 300px;
+        }
+        #name {
+            padding: 10px;
+            width: 100%;
+            box-sizing: border-box;
+            margin-bottom: 10px;
+            text-align: center;
+        }
         #signature-pad {
             border: 1px solid #ccc;
             width: 100%;
-            max-width: 300px;
             height: 100px;
         }
         button {
             margin-top: 10px;
-        }
-        input {
-            margin-bottom: 10px;
-            padding: 5px;
-            width: 100%;
-            max-width: 300px;
         }
     </style>
     <!-- Firebase SDKs -->
@@ -37,13 +44,13 @@
     <script>
         // Firebase 설정 및 초기화
         var firebaseConfig = {
-            apiKey: "YOUR_API_KEY",
-            authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-            projectId: "YOUR_PROJECT_ID",
-            storageBucket: "YOUR_PROJECT_ID.appspot.com",
-            messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-            appId: "YOUR_APP_ID",
-            measurementId: "YOUR_MEASUREMENT_ID"
+            apiKey: "AIzaSyCzOWsqoJ2DW45lzYIGehC5gEhBFFjQkg4",
+            authDomain: "taein-24032.firebaseapp.com",
+            projectId: "taein-24032",
+            storageBucket: "taein-24032.appspot.com",
+            messagingSenderId: "974345716486",
+            appId: "1:974345716486:web:d43cae89afa87543d5d487",
+            measurementId: "G-Q3X6KKMZ1M"
         };
 
         // Firebase 초기화
@@ -55,15 +62,17 @@
     </script>
 </head>
 <body>
-    <h1>전자 서명 양식</h1>
-    <input type="text" id="name" placeholder="이름을 입력하세요" required>
-    <div id="signature-pad">
-        <canvas></canvas>
+    <div id="container">
+        <h1>전자 서명 양식</h1>
+        <input type="text" id="name" placeholder="이름을 입력하세요" required>
+        <div id="signature-pad">
+            <canvas></canvas>
+        </div>
+        <button id="clear">Clear</button>
+        <button id="save">Save</button>
+        <img id="signature-image" src="" alt="Signature Image" style="display:none;"/>
     </div>
-    <button id="clear">Clear</button>
-    <button id="save">Save</button>
-    <img id="signature-image" src="" alt="Signature Image" style="display:none;"/>
-    
+
     <!-- Signature Pad -->
     <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.0.0/dist/signature_pad.umd.min.js"></script>
     
