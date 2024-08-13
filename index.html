@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ko">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -14,26 +14,13 @@
             height: 100vh;
             margin: 0;
         }
-        #container {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            width: 100%;
-            max-width: 300px;
-        }
-        #name {
-            padding: 10px;
-            width: 100%;
-            box-sizing: border-box;
-            margin-bottom: 10px;
-            text-align: center;
-        }
         #signature-pad {
             border: 1px solid #ccc;
             width: 100%;
-            height: 100px;
+            max-width: 300px; /* 서명란의 너비를 줄임 */
+            height: 100px;    /* 서명란의 높이를 줄임 */
         }
-        button {
+        input, button {
             margin-top: 10px;
         }
     </style>
@@ -44,35 +31,33 @@
     <script>
         // Firebase 설정 및 초기화
         var firebaseConfig = {
-            apiKey: "AIzaSyCzOWsqoJ2DW45lzYIGehC5gEhBFFjQkg4",
-            authDomain: "taein-24032.firebaseapp.com",
-            projectId: "taein-24032",
-            storageBucket: "taein-24032.appspot.com",
-            messagingSenderId: "974345716486",
-            appId: "1:974345716486:web:d43cae89afa87543d5d487",
-            measurementId: "G-Q3X6KKMZ1M"
+            apiKey: "YOUR_API_KEY",
+            authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+            projectId: "YOUR_PROJECT_ID",
+            storageBucket: "YOUR_PROJECT_ID.appspot.com",
+            messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+            appId: "YOUR_APP_ID",
+            measurementId: "YOUR_MEASUREMENT_ID"
         };
-
+        
         // Firebase 초기화
         firebase.initializeApp(firebaseConfig);
-
+        
         // Firebase Storage 및 Realtime Database 참조 생성
         var storage = firebase.storage();
         var database = firebase.database();
     </script>
 </head>
 <body>
-    <div id="container">
-        <h1>전자 서명 양식</h1>
-        <input type="text" id="name" placeholder="이름을 입력하세요" required>
-        <div id="signature-pad">
-            <canvas></canvas>
-        </div>
-        <button id="clear">Clear</button>
-        <button id="save">Save</button>
-        <img id="signature-image" src="" alt="Signature Image" style="display:none;"/>
+    <h1>전자 서명 양식</h1>
+    <input type="text" id="participantName" placeholder="이름을 입력하세요" />
+    <div id="signature-pad">
+        <canvas></canvas>
     </div>
-
+    <button id="clear">Clear</button>
+    <button id="save">Save</button>
+    <img id="signature-image" src="" alt="Signature Image" style="display:none;"/>
+    
     <!-- Signature Pad -->
     <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.0.0/dist/signature_pad.umd.min.js"></script>
     
@@ -96,32 +81,30 @@
         });
 
         document.getElementById("save").addEventListener("click", function() {
-            var name = document.getElementById("name").value.trim();
-
-            if (!name) {
-                alert("Please enter your name.");
+            var participantName = document.getElementById("participantName").value.trim();
+            
+            if (!participantName) {
+                alert("이름을 입력하세요.");
                 return;
             }
 
             if (signaturePad.isEmpty()) {
-                alert("Please provide a signature first.");
-            } else {
-                var dataURL = signaturePad.toDataURL();
-                var img = document.getElementById("signature-image");
-                img.src = dataURL;
-                img.style.display = "block";  // 이미지 표시
-
-                // Firebase에 서명 저장 함수 호출
-                saveSignatureToFirebase(dataURL, name);
+                alert("서명을 먼저 해주세요.");
+                return;
             }
+
+            var dataURL = signaturePad.toDataURL();
+            var img = document.getElementById("signature-image");
+            img.src = dataURL;
+            img.style.display = "block";  // 이미지 표시
+                
+            // Firebase에 서명 저장 및 상태 업데이트
+            saveSignatureToFirebase(dataURL, participantName);
         });
 
-        function saveSignatureToFirebase(dataURL, name) {
-            // storage 변수가 제대로 정의되었는지 확인
-            console.log('Firebase Storage:', storage);
-
+        function saveSignatureToFirebase(dataURL, participantName) {
             var storageRef = storage.ref();
-            var signatureRef = storageRef.child('signatures/' + name + '_' + Date.now() + '.png');
+            var signatureRef = storageRef.child('signatures/' + participantName + '.png');
 
             // 데이터 URL을 Blob으로 변환
             fetch(dataURL)
@@ -133,17 +116,24 @@
                     return snapshot.ref.getDownloadURL();
                 })
                 .then(function(downloadURL) {
-                    // 실시간 데이터베이스에 서명 URL 저장
-                    var newSignatureRef = database.ref('signatures').push();
-                    newSignatureRef.set({
-                        name: name,
-                        url: downloadURL,
-                        timestamp: Date.now()
+                    // 실시간 데이터베이스에서 이름으로 참가자 검색 및 업데이트
+                    var participantsRef = database.ref('participants');
+                    participantsRef.orderByChild('Name').equalTo(participantName).once('value', function(snapshot) {
+                        if (snapshot.exists()) {
+                            var participantKey = Object.keys(snapshot.val())[0];
+                            var participantRef = database.ref('participants/' + participantKey);
+                            participantRef.update({
+                                Signed: true,
+                                signatureURL: downloadURL
+                            });
+                            alert('서명이 성공적으로 업로드되었습니다!');
+                        } else {
+                            alert('해당 이름의 참가자를 찾을 수 없습니다.');
+                        }
                     });
-                    alert('Signature uploaded successfully!');
                 })
                 .catch(function(error) {
-                    console.error('Error uploading signature:', error);
+                    console.error('서명 업로드 중 오류 발생:', error);
                 });
         }
     </script>
